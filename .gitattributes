@@ -1,0 +1,14 @@
+# Author: ahui. Keep code stable across Windows development machines.
+* text=auto
+*.rs text eol=lf
+*.ts text eol=lf
+*.tsx text eol=lf
+*.mjs text eol=lf
+*.toml text eol=lf
+*.css text eol=lf
+*.json text eol=lf
+*.ps1 text eol=crlf
+*.png binary
+*.ico binary
+*.exe binary
+

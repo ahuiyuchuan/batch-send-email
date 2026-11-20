@@ -1,0 +1,899 @@
+/* Author: ahui. Shared desktop workbench with modular input/result surfaces.
+ * Layout owns scrolling; business components keep their existing state, controls and IPC.
+ * Explicit areas replace long page stacks, so selection, editing and primary actions coexist. */
+.app-shell {
+  background: var(--page);
+  gap: 12px;
+  padding: 16px 20px 20px;
+}
+.app-header {
+  border-radius: 12px;
+  border: 1px solid var(--chrome-border);
+  padding-inline: 20px;
+}
+.page-frame {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  overflow: hidden;
+}
+.workbench-layout {
+  display: grid;
+  grid-template-columns: 350px minmax(0, 1fr);
+  gap: 24px;
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+}
+.workbench-sidebar,
+.workbench-content {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+  scroll-padding: 12px;
+  padding: 2px 6px 8px 2px;
+}
+.workbench-sidebar-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+  min-height: 0;
+  border-right: 1px solid var(--border);
+  padding-right: 22px;
+}
+.workbench-sidebar {
+  flex: 1 1 auto;
+}
+.workbench-sidebar-header {
+  /* 与滚动体预留相同的原生滚动条槽和内边距，使固定栏头与下方卡片共用左右列线。 */
+  flex: 0 0 auto;
+  overflow: hidden;
+  scrollbar-gutter: stable;
+  padding: 2px 6px 0 2px;
+}
+.workbench-panel {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 18px;
+  background: var(--sidebar);
+  min-width: 0;
+}
+.workbench-panel-title {
+  margin: 0 0 18px;
+  font-size: 16px;
+  font-weight: 600;
+}
+.workspace-header {
+  flex: 0 0 auto;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--border);
+}
+.workspace-header h2 {
+  font-size: 24px;
+}
+/* Member acquisition: target/filter rail, live verification strip, and a separate result surface. */
+.workspace {
+  grid-template-columns: 300px minmax(0, 1fr);
+}
+.group-sidebar {
+  padding: 22px 16px 16px;
+  background: var(--surface);
+}
+.group-list {
+  gap: 6px;
+  margin-top: 12px;
+}
+.group-item {
+  padding: 12px;
+  background: var(--sidebar);
+  border-radius: 10px;
+}
+.group-sidebar > .filter-options {
+  flex: 0 1 auto;
+  max-height: 48%;
+  overflow-y: auto;
+  margin: 18px 0 0;
+  padding: 16px 0 0;
+  border-top: 1px solid var(--border);
+  border-radius: 0;
+  background: transparent;
+}
+.filter-main-row {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 14px;
+}
+.filter-options h3 {
+  font-size: 13px;
+  margin-bottom: 16px;
+}
+.filter-expand {
+  margin-top: 10px;
+  padding: 12px;
+  border-radius: 8px;
+  background: var(--sidebar);
+}
+.exclusion-options {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 4px;
+}
+.exclusion-option {
+  padding: 9px 8px;
+  border-radius: 6px;
+}
+.exclusion-option:has(input:checked) {
+  background: var(--selected);
+}
+.main-content {
+  padding: 24px;
+  background: var(--page);
+}
+.group-summary {
+  margin-bottom: 20px;
+}
+.result-summary {
+  display: grid;
+  grid-template-columns: minmax(280px, 0.7fr) minmax(0, 1.3fr);
+  gap: 18px 32px;
+  padding: 22px 24px;
+  border-radius: 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+.result-top {
+  gap: 20px;
+}
+.result-count strong {
+  font-size: 36px;
+  font-weight: 500;
+  font-family: var(--font-data);
+  letter-spacing: -1px;
+}
+.result-summary .filter-counts {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 18px;
+  margin: 0;
+}
+.result-summary .filter-counts > span {
+  display: flex;
+  flex-direction: column-reverse;
+  gap: 5px;
+  min-width: 68px;
+}
+.result-summary .filter-counts strong {
+  margin: 0;
+  font-size: 23px;
+  font-weight: 500;
+  font-family: var(--font-data);
+}
+.result-summary > .result-details,
+.result-summary > .exclusion-warning {
+  grid-column: 1 / -1;
+  margin: 0;
+}
+.member-section {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+  background: var(--surface);
+}
+.result-tabs {
+  gap: 24px;
+  margin-bottom: 14px;
+}
+.member-mail-actions {
+  padding: 14px 18px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+}
+.export-bar {
+  position: sticky;
+  bottom: -24px;
+  z-index: 2;
+  background: var(--surface);
+  margin: 16px -24px -24px;
+  padding: 16px 24px;
+  border-top: 1px solid var(--border);
+}
+/* Record/exclusion pages use the same independently scrollable maintenance and result regions. */
+.history-page,
+.manual-exclusions-page {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  padding: 24px;
+  margin: 0;
+  gap: 20px;
+}
+.history-content {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.history-content > .history-error,
+.history-content > .history-explainer {
+  margin: 0;
+  flex: 0 0 auto;
+}
+.history-workbench {
+  grid-template-columns: 400px minmax(0, 1fr);
+}
+.history-entry-card,
+.history-records-card,
+.unresolved-section {
+  margin: 0;
+}
+.history-entry-card,
+.unresolved-section {
+  padding: 18px;
+  background: var(--sidebar);
+  border-radius: 12px;
+}
+.history-entry-card > summary {
+  font-size: 14px;
+  line-height: 1.7;
+}
+.history-records-card {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  flex: 1;
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+}
+.history-list-head {
+  flex: 0 0 auto;
+  padding-bottom: 18px;
+  margin: 0;
+}
+.history-table-wrap {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+.history-pagination {
+  flex: 0 0 auto;
+  margin-top: 18px;
+}
+.unresolved-description {
+  line-height: 1.7;
+}
+.unresolved-row {
+  /* 复选区32px加间距必须作为固定列；flex-basis会把文字挤到复选框下一行。 */
+  display: grid;
+  grid-template-columns: 32px minmax(0, 1fr);
+  align-items: flex-start;
+  gap: 8px;
+}
+.unresolved-row > .unresolved-details {
+  grid-column: 2;
+}
+.unresolved-row > .unresolved-actions,
+.unresolved-row > .resolution-confirm {
+  grid-column: 2;
+  width: 100%;
+  margin: 0;
+}
+.unresolved-row-select {
+  min-height: 22px;
+}
+.unresolved-row > .unresolved-actions .button {
+  min-width: 0;
+  flex: 1 1 auto;
+  padding-inline: 10px;
+}
+.unresolved-toolbar {
+  gap: 12px;
+}
+.unresolved-selection-actions {
+  align-items: flex-start;
+}
+.manual-exclusions-input {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+.manual-exclusions-input textarea {
+  min-height: 220px;
+  resize: vertical;
+}
+.manual-exclusions-input .button {
+  align-self: stretch;
+}
+.manual-exclusions-tools {
+  margin: 0;
+  padding: 0 0 16px;
+  border-bottom: 1px solid var(--border);
+}
+.manual-exclusions-tools > .search-field {
+  flex: 1 1 300px;
+}
+.manual-exclusions-table {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+.manual-workbench .pagination {
+  margin: 0;
+  padding: 0;
+  flex: 0 0 auto;
+}
+/* Composition uses a configuration rail and a persistent draft surface, rather than a stack of forms. */
+.mail-composer {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 24px 24px 0;
+  gap: 20px;
+}
+.mail-workbench .workbench-content {
+  background: var(--page);
+  border-radius: 12px;
+  padding: 16px;
+}
+.mail-workbench .mail-mode-switch {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-self: stretch;
+  flex: 0 0 auto;
+  background: var(--sidebar);
+}
+.mail-workbench .workbench-sidebar {
+  scroll-padding-top: 12px;
+}
+.mail-workbench .mail-mode-switch .button {
+  min-height: 38px;
+}
+.mail-workbench .mail-mode-switch .button:focus-visible {
+  outline-offset: -3px;
+}
+/* 分段选择的选中态独立于发送主按钮；悬停时仍保持同一组底色与文字，避免被通用hover规则拆散。 */
+.mail-workbench .mail-mode-switch .button[aria-pressed="true"] {
+  background: var(--selected);
+  color: var(--primary);
+}
+.mail-recipient-panel .mail-field-row {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 14px;
+  padding: 0;
+  border: 0;
+}
+.mail-recipient-panel textarea {
+  min-height: 142px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px;
+}
+.mail-workbench .mail-account-picker {
+  margin: 0;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+}
+.mail-workbench .mail-account-choices {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 280px;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+}
+.mail-workbench .mail-account-choices > label {
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+.mail-account-choices label:has(input:checked) {
+  box-shadow: inset 3px 0 var(--primary);
+}
+.mail-workbench .mail-delivery-settings {
+  flex: 0 0 auto;
+}
+.mail-workbench .mail-send-options {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 14px;
+}
+.mail-workbench .mail-send-options label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+/* 每行固定相同的控件列与单位列：select没有单位也预留末列。
+ * 不用margin-left:auto按剩余文字推位，避免“人/秒”让数字框比下拉框向左偏移。 */
+.mail-workbench .mail-send-options .mail-option-field {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 112px 1em;
+}
+.mail-workbench .mail-send-options input[type="number"],
+.mail-workbench .mail-send-options select {
+  grid-column: 2;
+  margin: 0;
+  min-width: 0;
+  width: 100%;
+  height: var(--button-height);
+  padding: 7px 8px;
+  line-height: 20px;
+}
+.mail-workbench .mail-send-options input[type="number"] {
+  text-align: right;
+}
+.mail-workbench .mail-send-options select {
+  text-align: left;
+}
+.mail-workbench .mail-option-unit {
+  grid-column: 3;
+  color: var(--muted);
+}
+.mail-workbench .mail-send-options input[type="checkbox"] {
+  margin: 0;
+}
+.mail-workbench .mail-audience {
+  flex: 0 0 auto;
+  padding: 16px;
+}
+.mail-workbench .mail-audience-empty {
+  flex-wrap: wrap;
+}
+.mail-workbench .mail-audience-empty > div:nth-child(2) {
+  flex-basis: calc(100% - 65px);
+}
+.mail-workbench .mail-audience-empty > .button {
+  width: 100%;
+}
+.mail-draft-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  flex: 1 0 auto;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 24px;
+  min-width: 0;
+  min-height: 520px;
+}
+.mail-draft-panel > .mail-field-row {
+  padding: 0 0 18px;
+  border-bottom: 1px solid var(--border);
+  grid-template-columns: 60px minmax(0, 1fr);
+}
+.mail-draft-panel #mail-subject {
+  font-size: 22px;
+  padding: 4px;
+  line-height: 1.6;
+}
+.mail-draft-panel .mail-editor-shell {
+  border: 0;
+  border-radius: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+.mail-draft-panel .mail-format-bar {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+.mail-draft-panel .mail-editor {
+  flex: 1;
+  min-height: 340px;
+  padding: 22px 4px;
+  font-size: 15px;
+}
+.mail-footer {
+  position: static;
+  flex: 0 0 auto;
+  padding: 16px 0;
+  margin: 0;
+  min-height: 72px;
+}
+.mail-footer > .button {
+  min-width: 128px;
+  min-height: 40px;
+}
+.mail-progress {
+  flex: 0 0 auto;
+  padding: 20px;
+  border-radius: 10px;
+  background: var(--surface);
+  border-left: 4px solid var(--primary);
+}
+.mail-progress > div:first-child > strong {
+  font-size: 18px;
+}
+/* Template selection becomes a card library beside a stable preview; export and preview remain distinct. */
+.mail-template-dialog,
+.mail-accounts-dialog {
+  width: min(1320px, calc(100vw - 80px));
+}
+.mail-template-layout {
+  grid-template-columns: 440px minmax(0, 1fr);
+  height: min(680px, calc(100dvh - 240px));
+  gap: 24px;
+  margin-top: 4px;
+}
+.mail-template-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-content: start;
+  gap: 12px;
+  padding: 2px 6px 6px 2px;
+}
+.mail-template-row {
+  position: relative;
+  display: flex;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--sidebar);
+}
+.mail-template-row[data-previewed="true"] {
+  border-color: var(--primary);
+  box-shadow: inset 0 0 0 1px var(--primary);
+}
+.mail-template-export-check {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  z-index: 1;
+  padding: 10px;
+}
+.mail-template-item,
+.mail-template-item.selected {
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  min-height: 168px;
+  padding: 18px;
+  gap: 10px;
+}
+.template-card-symbol {
+  margin-bottom: 6px;
+  color: var(--primary);
+}
+.mail-template-item small {
+  margin-top: auto;
+  font-family: var(--font-data);
+}
+.mail-template-detail {
+  border-radius: 12px;
+}
+.mail-template-preview-heading {
+  background: var(--sidebar);
+  padding: 20px;
+}
+.mail-template-preview-heading h3 {
+  font-size: 20px;
+}
+.mail-template-management {
+  background: var(--sidebar);
+}
+/* Account settings share the card selection and form grid, with stable header/footer and independent rails. */
+.mail-accounts-dialog > .dialog-body {
+  grid-template-columns: 380px minmax(0, 1fr);
+  overflow: hidden;
+  min-height: 0;
+}
+.mail-account-management,
+.mail-account-form {
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 20px;
+  scrollbar-gutter: stable;
+}
+.mail-account-list {
+  overflow: visible;
+  max-height: none;
+}
+.mail-account-list li {
+  padding: 14px;
+  border: 1px solid var(--border);
+  background: var(--sidebar);
+  flex-wrap: wrap;
+}
+.mail-account-list li + li {
+  margin-top: 10px;
+}
+.mail-account-list li.active {
+  border-color: var(--primary);
+  box-shadow: inset 3px 0 var(--primary);
+}
+.mail-account-edit {
+  flex-basis: 100%;
+  padding: 0;
+}
+.mail-account-row-actions {
+  width: 100%;
+  justify-content: flex-end;
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px solid var(--border);
+}
+.mail-account-form .mail-settings-grid {
+  background: var(--surface);
+  padding: 0;
+  border: 0;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+}
+.mail-accounts-dialog .mail-full-field {
+  grid-column: 1 / -1;
+}
+.mail-account-form .mail-settings-grid input,
+.mail-account-form .mail-settings-grid select {
+  border-radius: 0;
+  border-width: 0 0 1px;
+  padding: 10px 0;
+  height: 40px;
+  line-height: 20px;
+}
+.mail-confirm-dialog {
+  width: min(1000px, calc(100vw - 80px));
+}
+.mail-confirm-dialog > .dialog-body {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  grid-template-rows: auto 1fr;
+  gap: 20px 28px;
+  align-items: start;
+}
+.mail-confirm-summary {
+  grid-column: 1;
+  margin: 0;
+}
+.mail-confirm-dialog .mail-account-allocation {
+  grid-column: 1;
+  margin: 0;
+  max-height: 360px;
+}
+.mail-confirm-dialog dl {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  margin: 0;
+}
+.mail-confirm-dialog > .dialog-body > p,
+.mail-confirm-dialog > .dialog-body > details {
+  grid-column: 1 / -1;
+}
+.mail-dialog::backdrop {
+  background: #0a152366;
+}
+.login-dialog::backdrop {
+  background: #0715287d;
+}
+/* 同一类交互共享尺寸与状态：搜索清除按钮出现时不推高输入框，选择优先于悬停。
+ * 不改业务门禁和DOM顺序；disabled仍由原组件管理，长内容只在摘要卡片中视觉收纳。 */
+.search-field,
+.mail-template-search {
+  min-height: 40px;
+  height: 40px;
+  padding: 0 10px;
+  flex-shrink: 0;
+}
+.search-field input,
+.mail-template-search input {
+  height: 38px;
+  padding: 0;
+  line-height: 20px;
+}
+.mail-template-search .icon-button {
+  width: 28px;
+  height: 28px;
+}
+.group-item.selected:hover:not(:disabled) {
+  background: var(--selected);
+}
+.mail-template-row:has(.mail-template-item:hover:not(:disabled)) {
+  background: var(--hover);
+}
+.mail-template-row[data-previewed="true"],
+.mail-template-row[data-previewed="true"]:has(.mail-template-item:hover) {
+  background: var(--selected);
+}
+.mail-template-item > strong,
+.mail-template-item > span {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  line-height: 1.5;
+}
+.mail-template-item,
+.mail-template-item.selected {
+  min-height: 196px;
+}
+.mail-template-item small {
+  font-variant-numeric: tabular-nums;
+}
+.mail-template-export-check:has(input:checked) {
+  background: var(--selected);
+}
+.mail-template-export-check:focus-within {
+  outline: 2px solid var(--focus);
+  outline-offset: -2px;
+}
+.mail-template-export-check input:focus-visible {
+  outline: none;
+}
+/* 同行操作与多行数据垂直居中；统一56px常规行，长内容仍可自然撑开，不隐藏记录。 */
+.table-wrap td,
+.history-table-wrap td,
+.manual-exclusions-table td {
+  padding-block: 10px;
+  vertical-align: middle;
+}
+/* 原生details保留键盘/读屏语义，整行可点。箭头只表达展开，不添加常驻说明文案。 */
+:is(
+    .mail-delivery-settings,
+    .history-entry-card,
+    .result-details,
+    .mail-audience-details
+  )
+  > summary {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 36px;
+  padding-block: 7px;
+  list-style: none;
+  cursor: pointer;
+}
+:is(
+    .mail-delivery-settings,
+    .history-entry-card,
+    .result-details,
+    .mail-audience-details
+  )
+  > summary::-webkit-details-marker {
+  display: none;
+}
+:is(
+    .mail-delivery-settings,
+    .history-entry-card,
+    .result-details,
+    .mail-audience-details
+  )
+  > summary::after {
+  content: "";
+  width: 7px;
+  height: 7px;
+  flex: 0 0 auto;
+  margin-left: auto;
+  margin-right: 3px;
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  transform: rotate(45deg);
+}
+:is(
+    .mail-delivery-settings,
+    .history-entry-card,
+    .result-details,
+    .mail-audience-details
+  )[open]
+  > summary::after {
+  transform: rotate(225deg);
+}
+/* 可滚动区域本身也可用键盘定位；内描边不会被父级overflow裁掉或挤动排版。 */
+:is(
+  .workbench-sidebar,
+  .workbench-content,
+  .group-list,
+  .main-content
+):focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: -2px;
+  border-radius: 6px;
+}
+.checkbox-label,
+.exclusion-option,
+.mail-template-include-attachments {
+  cursor: pointer;
+}
+:is(.checkbox-label, .exclusion-option, .mail-account-choices label):has(
+  input:disabled
+) {
+  cursor: not-allowed;
+}
+/* 只用浏览器原生动效：入口淡入和状态过渡不改尺寸、不阻塞点击、不重新挂载草稿。
+ * 减少动态效果时完整关闭装饰动画；不对主题表面做渐变，避免切换时出现中间对比色。 */
+:root {
+  --motion-fast: 120ms;
+  --motion-enter: 160ms;
+  --motion-ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+:is(
+  button,
+  .group-item,
+  .mail-template-row,
+  .exclusion-option,
+  .mail-account-choices label
+) {
+  transition:
+    background-color var(--motion-fast) var(--motion-ease),
+    color var(--motion-fast) var(--motion-ease),
+    border-color var(--motion-fast) var(--motion-ease),
+    box-shadow var(--motion-fast) var(--motion-ease);
+}
+:is(
+    .mail-delivery-settings,
+    .history-entry-card,
+    .result-details,
+    .mail-audience-details
+  )
+  > summary::after,
+.filter-expand svg {
+  transition: transform var(--motion-fast) var(--motion-ease);
+}
+.page-frame:not([hidden]),
+dialog[open],
+.exclusion-picker,
+details[open] > :not(summary) {
+  animation: workbench-reveal var(--motion-enter) var(--motion-ease);
+}
+dialog[open]::backdrop {
+  animation: workbench-reveal var(--motion-fast) ease-out;
+}
+@keyframes workbench-reveal {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --motion-fast: 0s;
+    --motion-enter: 0s;
+  }
+  .page-frame:not([hidden]),
+  dialog[open],
+  dialog[open]::backdrop,
+  .exclusion-picker,
+  details[open] > :not(summary) {
+    animation: none;
+  }
+}
+/* Retain compact gutters and wrapped summaries at the existing smaller-window threshold.
+ * Acceptance for this task remains 1920×1080; no additional viewport test is introduced. */
+@media (max-width: 1100px) {
+  .app-shell {
+    padding: 8px;
+    gap: 8px;
+  }
+  .workbench-layout {
+    grid-template-columns: 300px minmax(0, 1fr);
+    gap: 16px;
+  }
+  .result-summary {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .result-summary .filter-counts {
+    justify-content: flex-start;
+    flex-wrap: wrap;
+  }
+}

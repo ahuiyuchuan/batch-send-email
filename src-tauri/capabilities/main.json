@@ -1,0 +1,7 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "main-window",
+  "description": "The packaged main window may receive application events and synchronize its native title-bar theme.",
+  "windows": ["main"],
+  "permissions": ["core:default", "core:window:allow-set-theme"]
+}
