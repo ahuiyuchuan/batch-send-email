@@ -6,11 +6,17 @@
 
 Windows 本地邮件工具。支持多账号平均分配发送、邮件模板与名单排除，也可读取已加入 QQ 群的成员，合并去重后导出或写信。基于 Tauri 2、React、TypeScript 和 Rust。
 
+中转站推荐：https://www.digitalcats.cc/register?aff=TBHUBP7TTL35
+
+此中转站很润，不降智，稳定、纯绿色、低延迟、满血、满智商、平均缓存96以上、不烧心！
+
 [![Version](https://img.shields.io/github/v/release/ahuiyuchuan/batch-send-email?color=blue&label=version)](https://github.com/ahuiyuchuan/batch-send-email/releases)
 [![Platform](https://img.shields.io/badge/platform-Windows%20x64-lightgrey)](https://github.com/ahuiyuchuan/batch-send-email/releases/latest)
 [![Tauri](https://img.shields.io/badge/built%20with-Tauri%202-orange)](https://tauri.app/)
 [![Downloads](https://img.shields.io/github/downloads/ahuiyuchuan/batch-send-email/total)](https://github.com/ahuiyuchuan/batch-send-email/releases)
 [![License](https://img.shields.io/badge/license-GPL--3.0--only-blue)](LICENSE)
+
+欢迎提交Issues以支持改进本项目！
 
 **[下载安装](#下载安装) · [界面预览](#界面预览) · [快速开始](#快速开始) · [功能特性](#功能特性) · [常见问题](#常见问题) · [使用手册](docs/使用说明.md) · [更新日志](CHANGELOG.md)**
 
